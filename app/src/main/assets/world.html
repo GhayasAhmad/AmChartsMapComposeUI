@@ -1,0 +1,119 @@
+<!-- Styles -->
+<style>
+  #chartdiv {
+    background-color: #ffffff;
+  }
+</style>
+
+
+<script src="core.js"></script>
+<script src="maps.js"></script>
+<script src="worldLow.js"></script>
+<script src="countries2.js"></script>
+<script src="animated.js"></script>
+
+<!-- Chart code -->
+<script>
+  var polygonSeries
+  var chart
+  var polygonTemplate
+  var lastSelected
+  am4core.ready(function () {
+
+    // Themes begin
+    am4core.useTheme(am4themes_animated);
+    // Themes end
+
+    /* Create map instance */
+    chart = am4core.create("chartdiv", am4maps.MapChart);
+
+    /* Set map definition */
+    chart.geodata = am4geodata_worldLow;
+
+    /* Set projection */
+
+    chart.projection = new am4maps.projections.Miller();
+
+
+    chart.minZoomLevel = 3;
+    // chart.maxZoomLevel = 32;
+    chart.homeZoomLevel = 3;
+
+    /* Create map polygon series */
+    polygonSeries = chart.series.push(new am4maps.MapPolygonSeries());
+
+    /* Make map load polygon (like country names) data from GeoJSON */
+    polygonSeries.useGeodata = true;
+
+    /* Configure series */
+    polygonTemplate = polygonSeries.mapPolygons.template;
+    polygonTemplate.applyOnClones = true;
+    polygonTemplate.nonScalingStroke = true;
+    polygonTemplate.strokeOpacity = 0.5;
+    polygonTemplate.strokeWidth = 1;
+    polygonTemplate.stroke = "#ffffff"
+
+    polygonTemplate.fill = "#009688";
+
+    /* Create selected and hover states and set alternative fill color */
+    var ss = polygonTemplate.states.create("active");
+    ss.properties.fill = "#80cbc4";
+    var hs = polygonTemplate.states.create("hover");
+    hs.properties.fill = am4core.color("#80cbc4");
+
+    polygonTemplate.events.on("hit", function (ev) {
+
+      ev.target.series.chart.zoomToMapObject(ev.target);
+      // showAndroidToast(ev.target.dataItem.dataContext.id);
+      showAndroidToast(ev.target.dataItem.dataContext.name);
+      selectCountry(ev.target.dataItem.dataContext.id);
+
+    })
+
+    // Hide Antarctica
+    polygonSeries.exclude = ["AQ"];
+
+    // Zoom control
+
+    chart.zoomControl = new am4maps.ZoomControl();
+    chart.zoomControl.align = "right"
+    chart.zoomControl.valign = "top"
+
+    chart.zoomControl.background.fill = am4core.color("#009688");
+
+
+  });
+
+  function zoomCountry(id) {
+    chart.zoomToMapObject(polygonSeries.getPolygonById(id));
+  }
+
+
+  var selected;
+  function selectCountry(id) {
+    chart.zoomToMapObject(polygonSeries.getPolygonById(id));
+    if (selected) {
+      selected.isHover = false;
+    }
+    selected = polygonSeries.getPolygonById(id);
+    selected.isHover = true;
+  }
+
+  function zoomOutByCountryId(id) {
+    selected.isHover = false;
+    chart.zoomToMapObject(polygonSeries.getPolygonById(id), 3, true, 1000);
+  }
+
+  function goToHome() {
+    selected.isHover = false;
+    chart.goHome();
+  }
+
+  function showAndroidToast(toast) {
+    Android.showToast(toast);
+  }
+
+</script>
+
+<!-- HTML -->
+<div id="chartdiv"></div>
